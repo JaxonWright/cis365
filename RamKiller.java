@@ -1,32 +1,22 @@
 package jaxzack;
 import robocode.*;
-//import java.awt.Color;
-
-// API help : http://robocode.sourceforge.net/docs/robocode/robocode/Robot.html
+import java.awt.Color;
 
 /**
- * RamKiller - a robot by (your name here)
+ * RamKiller - a robot by Jaxon Wright and Zack Patterson
  */
-public class RamKiller extends Robot
+public class RamKiller extends AdvancedRobot
 {
+	int backCount = 0; // used to change direction after a certain amount of back() calls.
+					   // This helps from getting jammed between wall and RamFire.
+	double backupDistance = 110; //default amount to back up
 	/**
 	 * run: RamKiller's default behavior
 	 */
 	public void run() {
-		// Initialization of the robot should be put here
-
-		// After trying out your robot, try uncommenting the import at the top,
-		// and the next line:
-
-		// setColors(Color.red,Color.blue,Color.green); // body,gun,radar
-
-		// Robot main loop
-		while(true) {
-			// Replace the next 4 lines with any behavior you would like
-			ahead(100);
-			turnGunRight(360);
-			back(100);
-			turnGunRight(360);
+		setColors(Color.red,Color.cyan,Color.cyan); // body,gun,radar
+		while (true) {
+			turnGunRight(Double.POSITIVE_INFINITY);
 		}
 	}
 
@@ -34,23 +24,59 @@ public class RamKiller extends Robot
 	 * onScannedRobot: What to do when you see another robot
 	 */
 	public void onScannedRobot(ScannedRobotEvent e) {
-		// Replace the next line with any behavior you would like
-		fire(1);
+		turnRight(e.getBearing()); //face the scanned bot
+		turnGunRight(getHeading() + e.getBearing() - getGunHeading()); //align gun with canned bot
+		
+		if (e.getVelocity()==0) {
+		  fire(Rules.MAX_BULLET_POWER); //if they aren't moving, light 'em up!
+		} else {
+		  if (backCount<2) {
+		  	backCount++; //if we've backed up a small amoutn of times
+			back(backupDistance);
+		  } else {
+		  	turnRight(90); //otherwires, change direction
+			back(20);
+		  	backCount = 0;
+		  }
+		  
+		  fire(3);
+		}	
+	}
+	
+	/**
+	 * onHitRobot: What to do when you hit a robot
+	 */
+	void OnHitRobot(HitRobotEvent e) {
+		/*if(e.isMyFault() == false) {
+	 	   if (e.getBearing() > -90 && e.getBearing() <= 90) {	
+		        back(110);
+		    }
+		    else {
+		        ahead(100);
+		    }
+		} else {
+			ahead(1);
+			fire(Rules.MAX_BULLET_POWER);
+		}*/
 	}
 
 	/**
 	 * onHitByBullet: What to do when you're hit by a bullet
 	 */
 	public void onHitByBullet(HitByBulletEvent e) {
-		// Replace the next line with any behavior you would like
-		back(10);
+		back(100);
 	}
 	
 	/**
 	 * onHitWall: What to do when you hit a wall
 	 */
 	public void onHitWall(HitWallEvent e) {
-		// Replace the next line with any behavior you would like
-		back(20);
+		ahead(10); //move up so rotating doesn't cause another wall hit
+		if (e.getBearing() >= 180)
+			turnRight(90); //back right corner..ish hit wall. 
+		else
+			turnLeft(90); //back left corner..ish hit wall.
+		back(250);
+		backCount=0;
 	}	
 }
