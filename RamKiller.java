@@ -1,129 +1,157 @@
 package jaxzack;
 import robocode.*;
 import java.awt.Color;
+import java.awt.geom.Point2D;
 
 /**
  * RamKiller - a robot by Jaxon Wright and Zack Patterson
+ * This robot was made to exploit RamFire. It wins around 97% of the time
  */
 public class RamKiller extends AdvancedRobot
 {
-	int backCount = 0; // used to change direction after a certain amount of back() calls.
-					   // This helps from getting jammed between wall and RamFire.
-	final double MAX_BACKUP = 110; //max amount to back up
-	final double FIELD_PADDING = 50; //padding to sat within (mainly to avoid walls entirely)
+	private Point2D.Double[] points = new Point2D.Double[4];
+	private int pCount = 0;
+	private int pNum = 4; //stores the number of points in 'points'
 	
 	/**
 	 * run: RamKiller's default behavior
 	 */
 	public void run() {
 		setColors(Color.red,Color.cyan,Color.cyan); // body,gun,radar
+		//set up array of points used for the main path used. This is a rectangle
+		//bottom left
+		points[0] = new Point2D.Double((1.0/4.0)*getBattleFieldWidth(), (1.0/4.0)*getBattleFieldHeight());
+		//bottom right
+		points[1] = new Point2D.Double((3.0/4.0)*getBattleFieldWidth(), (1.0/4.0)*getBattleFieldHeight());
+		//top right
+		points[2] = new Point2D.Double((3.0/4.0)*getBattleFieldWidth(), (3.0/4.0)*getBattleFieldHeight());
+		//top left
+		points[3] = new Point2D.Double((1.0/4.0)*getBattleFieldWidth(), (3.0/4.0)*getBattleFieldHeight());
+		
+		pNum = points.length;
+		goToClosest(); //find and go to the point on the rectangle closest to us
 		while (true) {
+			System.out.println("run");
 			turnGunRight(Double.POSITIVE_INFINITY);
 		}
 	}
-
+	
+	/**
+	 * goToClosest: goes to the closest point in the predefined path to follow
+	 */
+	private void goToClosest() {
+		Point2D.Double currPos = new Point2D.Double(getX(), getY());
+		Point2D.Double closest = new Point2D.Double(2000, 2000);
+		for (int i=0; i < points.length; i++) {
+			if(currPos.distance(points[i]) - currPos.distance(closest) < 0.001){
+				closest = points[i];
+				pCount = i;
+			}
+		}
+		goTo(closest.getX(), closest.getY());
+	}
+	
+	/**
+	 * goToFurthestFrom: go to the point furthest from the supplied value
+	 */
+	private void goToFurthestFrom(Point2D.Double pos) {
+		//pos is position of scanned robot
+		Point2D.Double furthest = pos;
+		Point2D.Double[] corners = excludeOppositeCorner();
+		for (int i=0; i < corners.length; i++) {
+			//System.out.println("" + corners[i] + " pC:" + pCount + " i:" + i);
+			if(corners[i] != null && pos.distance(corners[i]) - pos.distance(furthest) >= 0.001){
+				furthest = corners[i];
+				//System.out.println("IN IF " + corners[i]);
+				pCount = i;
+			}
+		}
+		goTo(furthest.getX(), furthest.getY());
+	}
+	
+	/**
+	 * excludeOppositeCorner: returns array of points, ignoring the opposite corner
+	 */
+	private Point2D.Double[] excludeOppositeCorner() {
+		Point2D.Double[] temp = new Point2D.Double[4];
+		int currPoint = pCount%pNum;
+		pCount = currPoint;
+		//32
+		//01
+		System.out.println(pCount%pNum);
+		switch(currPoint) {
+			case 0:
+				temp[0] = points[0];
+				temp[1] = points[1];
+				temp[2] = null;
+				temp[3] = points[3];
+				break;
+			case 1:
+				temp[0] = points[0];
+				temp[1] = points[1];
+				temp[2] = points[2];
+				temp[3] = null;
+				break;
+			case 2:
+				temp[0] = null;
+				temp[1] = points[1];
+				temp[2] = points[2];
+				temp[3] = points[3];
+				break;
+			case 3:
+				temp[0] = points[0];
+				temp[1] = null;
+				temp[2] = points[2];
+				temp[3] = points[3];
+				break;
+		}
+		return temp;
+	}
+	
+	/**
+	 * calcEnemyPos: caclulates X, Y coordinate of scanned robot
+	 * Used from StackOVerflow user Kris
+	 */
+	private Point2D.Double calcEnemyPos(double angleToEnemy, double dist) {
+        // Calculate the angle to the scanned robot
+        double angle = Math.toRadians((getHeading() + angleToEnemy) % 360);
+        // Calculate the coordinates of the robot
+        double enemyX = (getX() + Math.sin(angle) * dist);
+        double enemyY = (getY() + Math.cos(angle) * dist);
+		return new Point2D.Double(enemyX, enemyY);
+ 	}
+	
 	/**
 	 * onScannedRobot: What to do when you see another robot
 	 */
 	public void onScannedRobot(ScannedRobotEvent e) {
-		turnRight(e.getBearing()); //face the scanned bot
-		turnGunRight(getHeading() + e.getBearing() - getGunHeading()); //align gun with canned bot
-		
-		if (e.getVelocity()==0) {
-		  fire(Rules.MAX_BULLET_POWER); //if they aren't moving, light 'em up!
-		} else {
-		  if (backCount<2) {
-		  	backCount++; //if we've backed up a small amoutn of times
-			safeBack();
-		  } else {
-		  	turnRight(90); //otherwise, change direction
-			safeBack();
-		  	backCount = 0;
-		  }
-		  fire(3);
-		}	
-	}
-	
-	/**
-	 * safeBack: safely back up within boundaries set to avoid walls entirely
-	 */
-	void safeBack() {
-		double backAmount = MAX_BACKUP;
-		double desiredX;
-		double desiredY;
-		double rightBound = getBattleFieldWidth() - FIELD_PADDING;
-		double topBound = getBattleFieldHeight() - FIELD_PADDING;
-		double heading = getHeading()-180; //we are backing up
-		double hRad = Math.toRadians(heading);
-		//Figure out desired X and Y values
-		desiredX = Math.asin(hRad)*backAmount;
-		desiredY = Math.acos(hRad)*backAmount;
-		
-		System.out.println("Back Heading: " + heading);
-		System.out.println("Current X: " + getX());
-		System.out.println("Current Y: " + getY());
-		
-		System.out.println("Desired X: " + desiredX);
-		System.out.println("Desired Y: " + desiredY);
-		
-		//adjust desiredX
-		if (desiredX <= FIELD_PADDING){ //too colse to adjusted left wall
-			desiredX = FIELD_PADDING;
-		} else if ( desiredX >= rightBound){ //too colse to adjusted right wall
-			desiredX = rightBound;
+		System.out.println("OnScannedRobot: Dist:" + e.getDistance() + " pC:" + Math.abs(pCount)%pNum);
+		//They are too close to us. Get away!
+		if(e.getDistance() < 50) {
+			turnRight(e.getBearing()-90);
+			ahead(100);
+			goToFurthestFrom(calcEnemyPos(e.getBearing(), e.getDistance()));
+		} else  {
+			turnGunRight(getHeading() + e.getBearing() - getGunHeading());//align gun with scanned bot
+			if (e.getVelocity()==0) { 
+	  		  fire(Rules.MAX_BULLET_POWER); //if they aren't moving, light 'em up!
+			} else {
+				//System.out.println("" + points[pCount%pNum].getX() + ", " + points[pCount%pNum].getY());
+				goToFurthestFrom(calcEnemyPos(e.getBearing(), e.getDistance()));
+			}
 		}
-		//adjust desiredY
-		if (desiredY <= FIELD_PADDING){ //too close to adjusted bottom wall
-			desiredY = FIELD_PADDING;
-		} else if (desiredY >= topBound){ //too close to adjusted top wall
-			desiredY = topBound;
-		}
-		
-		System.out.println("New Desired X: " + desiredX);
-		System.out.println("New Desired Y: " + desiredY);
-		//backAmount to the distance between current point and new point
-		//										          ______________________
-		//This is simply the standard distance formula, -/ (y2-y1)^2 + (x2-x1)^2
-		backAmount = Math.sqrt(Math.pow(desiredY-getY(), 2) + Math.pow(desiredX-getX(), 2));
-		System.out.println("Back Amount = " + backAmount);
-		back(backAmount);
 	}
 	
-	/**
-	 * onHitRobot: What to do when you hit a robot
-	 */
-	void OnHitRobot(HitRobotEvent e) {
-		/*if(e.isMyFault() == false) {
-	 	   if (e.getBearing() > -90 && e.getBearing() <= 90) {	
-		        back(110);
-		    }
-		    else {
-		        ahead(100);
-		    }
-		} else {
-			ahead(1);
-			fire(Rules.MAX_BULLET_POWER);
-		}*/
+    /**
+	* From RoboWiki
+	* GoTo coordinates.
+	*/
+	private void goTo(double destinationX, double destinationY) {
+		destinationX -= getX();
+		destinationY -= getY();
+        double angle = robocode.util.Utils.normalRelativeAngle(Math.atan2(destinationX, destinationY) - Math.toRadians(getHeading()) );
+		double turnAngle = Math.atan(Math.tan(angle));
+                turnRight(Math.toDegrees(turnAngle));
+		ahead(Math.hypot(destinationX, destinationY) * (angle == turnAngle ? 1 : -1));
 	}
-
-	/**
-	 * onHitByBullet: What to do when you're hit by a bullet
-	 */
-	public void onHitByBullet(HitByBulletEvent e) {
-		//back(100);
-	}
-	
-	/**
-	 * onHitWall: What to do when you hit a wall
-	 * THIS SHOULD NEVER HAPPEN
-	 */
-	public void onHitWall(HitWallEvent e) {
-		ahead(10); //move up so rotating doesn't cause another wall hit
-		if (e.getBearing() >= 180)
-			turnRight(90); //back right corner..ish hit wall. 
-		else
-			turnLeft(90); //back left corner..ish hit wall.
-		back(250);
-		backCount=0;
-	}	
 }
