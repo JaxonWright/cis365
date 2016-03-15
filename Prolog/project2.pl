@@ -1,7 +1,9 @@
 /* CIS 365 Project 2 --- Jaxon Wright and Zack Patterson */
+/* partial family tree of Jaxon's father's side of the family */
 
-/*--- FACTS ---*/
+/*--- FACTS -------------------------------------------*/
 /*NOTE: some spouse relationships have been ignored*/
+/*child(X,Y), Y is a child of X*/
 spouse(charles_e_wright, angeline_balistreri). /*Jaxons great grandparents*/
 child(charles_e_wright, jack_d_wright).  /*Jaxons grandpa*/
 child(angeline_balistreri, jack_d_wright).
@@ -30,6 +32,7 @@ child(vyonne_l_davis, mary_m_wright).
 
 spouse(brian_c_wright, cindy_a_lubben). /*Jaxons parents*/
 child(brian_c_wright, jaxon_h_wright).  /*Jaxon*/
+child(cindy_a_lubben, jaxon_h_wright).
 child(brian_c_wright, katie_n_wright).  /*Jaxons half-sister*/
 child(cindy_a_lubben, charles_v_vanhorn). /*Jaxons half-brother*/
 
@@ -40,8 +43,8 @@ child(daniel_m_wright, abigail_j_wright).
 child(daniel_m_wright, lydia_v_wright).
 child(daniel_m_wright, sophia_l_wright).
 child(daniel_m_wright, angeline_wright).
-child(mary_m_wright, milo_lund).
-child(mary_m_wright, leo_lund).
+child(mary_m_wright, miles_lund).
+child(mary_m_wright, leopold_lund).
 
 /*Jaxons first cousins, once removed */
 child(shirley_a_davis, victoria_v_ward).
@@ -64,12 +67,22 @@ child(victoria_v_ward, madeline_r_steege).
 child(victoria_v_ward, adam_steege).
 
 
-/*--- RULES ---*/
-areSiblings(X,Y) :- (child(A,X), child(A,Y)); (child(B,X), child(B,Y)).
+/*--- RULES ------------------------------------------*/
+siblings(X,Y) :- child(A,X), child(A,Y), not(X=Y). /*X and Y are siblings*/
+descend(X,Y) :- child(X,Y).                       /*Y is a decendant of X*/
+descend(X,Y) :- child(X,Z), descend(Z,Y).
+grandparent(X,Y) :- child(Y,Z), child(Z,X).       /*Y is grandparent of X*/
+auntuncle(X,Y) :- siblings(Y,Z), child(Z,X).      /*Y is aunt or uncle of X*/
 
 
-/*--- GOALS ---*/
+/*--- GOALS ------------------------------------------*/
 solve :-
-  areSiblings(katie_n_wright, jack_d_wright).
+  findall(X,child(jack_d_wright, X),A), nl,
+  write(' jack_d_wright\'s children are: '), nl,
+  write(A),
+
+  setof(X,siblings(X, brian_c_wright),B), nl,     /*setof removes duplicates*/
+  write(' brian_c_wright\'s siblings are: '), nl,
+  write(B).
 
 ?- solve.
