@@ -171,7 +171,8 @@ solve :-
 
   /*number 6*/
   write(' does angeline_wright descend from angeline_balistreri?'), nl,
-  write(descend(angeline_balistreri, angeline_wright)), nl,
+  (descend(angeline_balistreri, angeline_wright) -> Z = yes; Z = no),
+  write(Z), nl,
 
   /*number 7*/
   setof((X,Y), secondcousin(X,Y),H), nl,
