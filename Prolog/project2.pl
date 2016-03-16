@@ -1,42 +1,41 @@
-/* CIS 365 Project 2 --- Jaxon Wright and Zack Patterson */
-/* partial family tree of Jaxon's father's side of the family */
+/* CIS 365 Project 2 --- Jaxon Wright and Zack Patterson                      */
+/* Partial family tree of Jaxon's father's side of the family                 */
 
-/*--- FACTS -------------------------------------------*/
-/*child(X,Y), Y is a child of X*/
-/*spouse(MALE,FEMALE)*/
+/*--- FACTS ------------------------------------------------------------------*/
+/* son/daughter(X,Y), Y is a child of X                                       */
+/* spouse(MALE,FEMALE)                                                        */
 
-spouse(charles_e_wright, angeline_balistreri). /*Jaxons great grandparents*/
-son(charles_e_wright, jack_d_wright).  /*Jaxons grandpa*/
+spouse(charles_e_wright, angeline_balistreri).  /*Jaxons great grandparents*/
+son(charles_e_wright, jack_d_wright).           /*Jaxons grandpa*/
 son(angeline_balistreri, jack_d_wright).
 
-spouse(merlyn_davis, mildred_hahn).     /*Jaxons great grandparents*/
-daughter(merlyn_davis, vyonne_l_davis).    /*Jaxons grandma*/
+spouse(merlyn_davis, mildred_hahn).             /*Jaxons great grandparents*/
+daughter(merlyn_davis, vyonne_l_davis).         /*Jaxons grandma*/
 daughter(mildred_hahn, vyonne_l_davis).
-daughter(merlyn_davis, shirley_a_davis).   /*Jaxons great aunt*/
+daughter(merlyn_davis, shirley_a_davis).        /*Jaxons great aunt*/
 daughter(mildred_hahn, shirley_a_davis).
-son(merlyn_davis, william_davis).     /*Jaxons great uncle*/
+son(merlyn_davis, william_davis).               /*Jaxons great uncle*/
 son(mildred_hahn, william_davis).
-son(merlyn_davis, gerald_davis).      /*Jaxons great uncle*/
+son(merlyn_davis, gerald_davis).                /*Jaxons great uncle*/
 son(mildred_hahn, gerald_davis).
-son(merlyn_davis, jack_e_davis).      /*Jaxons great uncle*/
+son(merlyn_davis, jack_e_davis).                /*Jaxons great uncle*/
 son(mildred_hahn, jack_e_davis).
 
-spouse(jack_d_wright, vyonne_l_davis).  /*Jaxons grandparents*/
-son(jack_d_wright, gary_e_wright).    /*Jaxons uncle*/
+spouse(jack_d_wright, vyonne_l_davis).          /*Jaxons grandparents*/
+son(jack_d_wright, gary_e_wright).              /*Jaxons uncle*/
 son(vyonne_l_davis, gary_e_wright).
-son(jack_d_wright, daniel_m_wright).  /*Jaxons uncle*/
+son(jack_d_wright, daniel_m_wright).            /*Jaxons uncle*/
 son(vyonne_l_davis, daniel_m_wright).
-son(jack_d_wright, brian_c_wright).   /*Jaxons father*/
+son(jack_d_wright, brian_c_wright).             /*Jaxons father*/
 son(vyonne_l_davis, brian_c_wright).
-daughter(jack_d_wright, mary_m_wright).    /*Jaxons aunt*/
-
+daughter(jack_d_wright, mary_m_wright).         /*Jaxons aunt*/
 daughter(vyonne_l_davis, mary_m_wright).
 
-spouse(brian_c_wright, cindy_a_lubben). 	/*Jaxons parents*/
-son(brian_c_wright, jaxon_h_wright).  	/*Jaxon*/
+spouse(brian_c_wright, cindy_a_lubben). 	      /*Jaxons parents*/
+son(brian_c_wright, jaxon_h_wright).  	        /*Jaxon*/
 son(cindy_a_lubben, jaxon_h_wright).
-daughter(brian_c_wright, katie_n_wright).	/*Jaxons half-sister*/
-son(cindy_a_lubben, charles_v_vanhorn). 	/*Jaxons half-brother*/
+daughter(brian_c_wright, katie_n_wright).	      /*Jaxons half-sister*/
+son(cindy_a_lubben, charles_v_vanhorn). 	      /*Jaxons half-brother*/
 
 /*Jaxons first cousins*/
 daughter(gary_e_wright, amy_m_wright).
@@ -55,7 +54,7 @@ son(mary_m_wright, miles_lund).
 son(jon_lund, miles_lund).
 son(mary_m_wright, leopold_lund).
 son(jon_lund, leopold_lund).
-/**their spouses*/
+/**their parents*/
 spouse(gary_e_wright, patricia_jones).
 spouse(daniel_m_wright, kathlene_white).
 spouse(jon_lund, mary_m_wright).
@@ -76,7 +75,7 @@ daughter(amy_m_wright, clara_devey).
 daughter(trey_devey, clara_devey).
 son(lydia_v_wright, ezra_bren).
 son(cameron_bren, ezra_bren).
-/**Their spouses*/
+/**Their spouses or parents*/
 spouse(trey_devey, amy_m_wright).
 spouse(craig_steege, victoria_v_ward).
 spouse(greg_grzebieniak, kelly_ward).
@@ -104,7 +103,7 @@ son(victoria_v_ward, adam_steege).
 son(craig_steege, adam_steege).
 
 
-/*--- RULES ------------------------------------------*/
+/*--- RULES ------------------------------------------------------------------*/
 /*Y is a child of X*/
 child(X,Y) :- son(X,Y); daughter(X,Y).
 /*X and Y are siblings*/
@@ -134,7 +133,7 @@ onceremoved(X,Y) :- (auntuncle(X,A), child(A,C), child(C,Y)); (greatauntuncle(X,
 /*Y is a second cousin of X*/
 secondcousin(X,Y) :- onceremoved(X,C), child(C,Y).
 
-/*--- GOALS ------------------------------------------*/
+/*--- GOALS ------------------------------------------------------------------*/
 solve :-
   findall(X,child(jack_d_wright, X),A), nl,
   write(' jack_d_wright\'s children are: '), nl,
